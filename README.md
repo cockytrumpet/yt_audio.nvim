@@ -16,3 +16,10 @@ Simple NeoVim plugin to stream audio from YouTube.
   opts = true,
 }
 ```
+
+## User Commands
+
+| Command | Arguments | Keymap     | Description                        |
+| ------- | --------- | ---------- | ---------------------------------- |
+| YTPlay  | url       | <leader>yp | If not provided, a default is used |
+| YTStop  |           | <leader>ys | Stop playing                       |
