@@ -22,7 +22,17 @@ local M = {
 
 		local url = args
 		if url == "" then
-			url = "https://www.youtube.com/watch?v=abUT5IEkwrg"
+			vim.ui.input({
+				prompt = "Enter URL: ",
+				-- default = "https://www.youtube.com/watch?v=abUT5IEkwrg",
+			}, function(choice)
+				url = choice
+			end)
+		end
+
+		if url == "" then
+			vim.notify("No URL provided")
+			return
 		end
 
 		local downloader = {
@@ -70,7 +80,14 @@ local M = {
 	setup = function()
 		self = self or M
 
-		vim.api.nvim_create_user_command("YAPlay", function(args)
+		vim.api.nvim_create_user_command("YAPlay", function()
+			require("YtAudio").play(self, "")
+		end, {})
+		vim.api.nvim_create_user_command("YAFav", function(args)
+			if args.args == "" then
+				vim.notify("No URL provided")
+				return
+			end
 			require("YtAudio").stop(self, false)
 			require("YtAudio").play(self, args.args)
 		end, { nargs = "?" })
@@ -80,6 +97,13 @@ local M = {
 
 		vim.api.nvim_set_keymap("n", "<leader>yp", ":YAPlay<CR>", { noremap = true, silent = true })
 		vim.api.nvim_set_keymap("n", "<leader>ys", ":YAStop<CR>", { noremap = true, silent = true })
+		vim.api.nvim_set_keymap(
+			"n",
+			"<leader>y1",
+			":YAFav https://www.youtube.com/watch?v=abUT5IEkwrg<CR>",
+			{ noremap = true, silent = true }
+		)
+		-- vim.api.nvim_set_keymap("n", "<leader>y2", ":YAFav 2nd_favorite_url <CR>", { noremap = true, silent = true })
 	end,
 }
 
