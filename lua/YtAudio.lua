@@ -56,7 +56,13 @@ local M = {
 			"-",
 		}
 
-		vim.notify("YtAudio playing " .. url)
+		local title = ""
+		vim.system({ "yt-dlp", "-q", "--no-warnings", "-f", "234", "--print", "fulltitle", url }, {
+			text = true,
+		}, function(out)
+			title = out.stdout
+			vim.notify(title)
+		end)
 
 		local pipe = vim.loop.new_pipe(true)
 
@@ -78,7 +84,7 @@ local M = {
 	end,
 
 	setup = function()
-		self = self or M
+		local self = self or M
 
 		vim.api.nvim_create_user_command("YAPlay", function()
 			require("YtAudio").play(self, "")
