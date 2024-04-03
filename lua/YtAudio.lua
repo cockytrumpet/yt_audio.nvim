@@ -14,6 +14,7 @@ local M = {
 			end
 			self.Player.kill(M.Player, "sigterm")
 			self.Player = nil
+			vim.g.YtAudioTitle = ""
 		end
 	end,
 
@@ -24,7 +25,6 @@ local M = {
 		if url == "" then
 			vim.ui.input({
 				prompt = "Enter URL: ",
-				-- default = "https://www.youtube.com/watch?v=abUT5IEkwrg",
 			}, function(choice)
 				url = choice
 			end)
@@ -56,12 +56,15 @@ local M = {
 			"-",
 		}
 
+		require("YtAudio").stop(self, false)
+
 		local title = ""
 		vim.system({ "yt-dlp", "-q", "--no-warnings", "-f", "234", "--print", "fulltitle", url }, {
 			text = true,
 		}, function(out)
-			title = out.stdout
+			title, _ = string.gsub(out.stdout, "\n$", " ")
 			vim.notify(title)
+			vim.g.YtAudioTitle = title
 		end)
 
 		local pipe = vim.loop.new_pipe(true)
@@ -83,6 +86,13 @@ local M = {
 		}, function() end)
 	end,
 
+	getTitle = function()
+		if vim.g.YtAudioTitle == "" then
+			return ""
+		end
+		return " " .. vim.g.YtAudioTitle
+	end,
+
 	setup = function()
 		local self = self or M
 
@@ -95,7 +105,6 @@ local M = {
 				vim.notify("No URL provided")
 				return
 			end
-			require("YtAudio").stop(self, false)
 			require("YtAudio").play(self, args.args)
 		end, { nargs = "?" })
 
