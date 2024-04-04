@@ -51,6 +51,8 @@ local M = {
 			"-vn",
 			"-nodisp",
 			"-autoexit",
+			"-volume",
+			"20",
 			"-loglevel",
 			"quiet",
 			"-",
