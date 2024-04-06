@@ -92,7 +92,8 @@ local M = {
 		if vim.g.YtAudioTitle == "" then
 			return ""
 		end
-		return " " .. vim.g.YtAudioTitle
+		--  <- this is supposed to be the youtube logo?
+		return " " .. vim.g.YtAudioTitle
 	end,
 
 	setup = function()
