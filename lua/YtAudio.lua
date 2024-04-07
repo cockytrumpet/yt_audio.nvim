@@ -1,26 +1,26 @@
 local M = {
 	Downloader = nil,
 	Player = nil,
+	opts = {
+		notifications = true,
+	},
 
-	stop = function(self, notify)
-		self = self or M
+	stop = function(self)
 		if self.Downloader then
-			self.Downloader.kill(M.Downloader, "sigterm")
+			self.Downloader.kill(self.Downloader, "sigterm")
 			self.Downloader = nil
 		end
 		if self.Player then
-			if notify then
+			if self.opts.notifications then
 				vim.notify("Stopping YtAudio")
 			end
-			self.Player.kill(M.Player, "sigterm")
+			self.Player.kill(self.Player, "sigterm")
 			self.Player = nil
 			vim.g.YtAudioTitle = ""
 		end
 	end,
 
 	play = function(self, args)
-		self = self or M
-
 		local url = args
 		if url == "" then
 			vim.ui.input({
@@ -65,7 +65,9 @@ local M = {
 			text = true,
 		}, function(out)
 			title, _ = string.gsub(out.stdout, "\n$", " ")
-			vim.notify(title)
+			if M.opts.notifications then
+				vim.notify(title)
+			end
 			vim.g.YtAudioTitle = title
 		end)
 
@@ -92,12 +94,12 @@ local M = {
 		if vim.g.YtAudioTitle == "" then
 			return ""
 		end
-		--  <- this is supposed to be the youtube logo?
-		return " " .. vim.g.YtAudioTitle
+		--  , 
+		return " " .. vim.g.YtAudioTitle
 	end,
 
-	setup = function()
-		local self = self or M
+	setup = function(self, opts)
+		M.opts = vim.tbl_deep_extend("force", M.opts, opts)
 
 		vim.api.nvim_create_user_command("YAPlay", function()
 			require("YtAudio").play(self, "")
