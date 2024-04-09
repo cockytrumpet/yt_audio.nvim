@@ -15,15 +15,14 @@ M.ffplay_args = {
 	"-vn",
 	"-nodisp",
 	"-autoexit",
-	"-volume",
-	"20",
 	"-loglevel",
 	"quiet",
-	"-",
+	-- "-" is appended after volume options
 }
 
 M.opts = {
 	notifications = true,
+	volume = 50,
 	icon = "", --  , 
 }
 
@@ -116,6 +115,7 @@ end
 
 M.playURL = function()
 	local pipe = vim.loop.new_pipe(true)
+	local new_ffplay_args = { "-volume", M.opts.volume, "-" }
 
 	---@diagnostic disable-next-line: missing-fields
 	M.Downloader = vim.loop.spawn("yt-dlp", {
@@ -129,7 +129,7 @@ M.playURL = function()
 
 	---@diagnostic disable-next-line: missing-fields
 	M.Player = vim.loop.spawn("ffplay", {
-		args = M.ffplay_args,
+		args = vim.list_extend(vim.list_slice(M.ffplay_args), new_ffplay_args),
 		stdio = { pipe, nil, nil },
 	}, function() end)
 end

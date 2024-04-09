@@ -27,16 +27,17 @@ Simple NeoVim plugin to stream audio from YouTube.
 ```lua
 {
   notifications = true, -- turn off start/stop notifications
+  volume = 50,          -- 0-100
   icon = ""            -- set any icon
 }
 ```
 
 ## User Commands
 
-| Command | Arguments | Keymap       | Description                                 |
-| ------- | --------- | ------------ | ------------------------------------------- |
-| YTPlay  | \<url\>   | user-defined | Start playing (ask for url if not provided) |
-| YTStop  |           | user-defined | Stop playing                                |
+| Command | Arguments | Keymap       | Description                                    |
+| ------- | --------- | ------------ | ---------------------------------------------- |
+| YTPlay  | \<url\>   | user-defined | Start playing (prompt for url if not provided) |
+| YTStop  |           | user-defined | Stop playing                                   |
 
 ## Integrations
 
