@@ -38,37 +38,6 @@ M.setup = function(opts)
 	end, {})
 end
 
-M.getTitle = function()
-	if M.title == "" then
-		return M.title
-	end
-	return M.opts.icon .. " " .. M.title
-end
-
-M.redraw = function()
-	vim.cmd("redrawtabline")
-	vim.cmd("redrawstatus")
-end
-
-M.stop = function()
-	local function stop_process(component)
-		if component then
-			if M.opts.notifications then
-				vim.notify("Stopping " .. component)
-			end
-			component.kill(component, "sigterm")
-		end
-	end
-
-	stop_process(M.Downloader)
-	stop_process(M.Player)
-
-	M.title = ""
-	M.url = ""
-
-	M.redraw()
-end
-
 M.play = function(args)
 	local url = args
 
@@ -104,9 +73,7 @@ M.play = function(args)
 
 		M.title, _ = string.gsub(out.stdout, "\n$", " ")
 
-		if M.opts.notifications == true then
-			vim.notify(M.title)
-		end
+		M.notify(M.title)
 	end):wait()
 
 	M.redraw()
@@ -132,6 +99,43 @@ M.playURL = function()
 		args = vim.list_extend(vim.list_slice(M.ffplay_args), new_ffplay_args),
 		stdio = { pipe, nil, nil },
 	}, function() end)
+end
+
+M.notify = function(message)
+	if M.opts.notifications then
+		vim.notify(message)
+	end
+end
+
+M.stop = function()
+	M.notify("Stopping")
+
+	local stop_process = function(component)
+		if component then
+			component.kill(component, "sigterm")
+		end
+	end
+
+	stop_process(M.Downloader)
+	stop_process(M.Player)
+
+	M.title = ""
+	M.url = ""
+
+	M.redraw()
+end
+
+M.getTitle = function()
+	if M.title == "" then
+		return M.title
+	end
+
+	return M.opts.icon .. " " .. M.title
+end
+
+M.redraw = function()
+	vim.cmd("redrawtabline")
+	vim.cmd("redrawstatus")
 end
 
 return M
