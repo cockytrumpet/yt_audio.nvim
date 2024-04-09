@@ -1,122 +1,137 @@
-local M = {
-	Downloader = nil,
-	Player = nil,
-	opts = {
-		notifications = true,
-	},
+local M = {}
 
-	stop = function(self)
-		if self.Downloader then
-			self.Downloader.kill(self.Downloader, "sigterm")
-			self.Downloader = nil
-		end
-		if self.Player then
-			if self.opts.notifications then
-				vim.notify("Stopping YtAudio")
+M.ytdlp_args = {
+	"-q",
+	"--no-warnings",
+	"-f",
+	"234",
+	"-o",
+	"-",
+	-- url is appended to this table
+}
+
+M.ffplay_args = {
+	"-i",
+	"-vn",
+	"-nodisp",
+	"-autoexit",
+	"-volume",
+	"20",
+	"-loglevel",
+	"quiet",
+	"-",
+}
+
+M.opts = {
+	notifications = true,
+	icon = "", --  , 
+}
+
+M.setup = function(opts)
+	M.opts = vim.tbl_deep_extend("force", M.opts, opts or {})
+
+	vim.api.nvim_create_user_command("YAPlay", function(args)
+		require("YtAudio").play(args.args)
+	end, { nargs = "?" })
+
+	vim.api.nvim_create_user_command("YAStop", function()
+		require("YtAudio").stop()
+	end, {})
+end
+
+M.getTitle = function()
+	if M.title == "" then
+		return M.title
+	end
+	return M.opts.icon .. " " .. M.title
+end
+
+M.redraw = function()
+	vim.cmd("redrawtabline")
+	vim.cmd("redrawstatus")
+end
+
+M.stop = function()
+	local function stop_process(component)
+		if component then
+			if M.opts.notifications then
+				vim.notify("Stopping " .. component)
 			end
-			self.Player.kill(self.Player, "sigterm")
-			self.Player = nil
-			vim.g.YtAudioTitle = ""
+			component.kill(component, "sigterm")
 		end
-	end,
+	end
 
-	play = function(self, args)
-		local url = args
-		if url == "" then
-			vim.ui.input({
-				prompt = "Enter URL: ",
-			}, function(choice)
-				url = choice
-			end)
+	stop_process(M.Downloader)
+	stop_process(M.Player)
+
+	M.title = ""
+	M.url = ""
+
+	M.redraw()
+end
+
+M.play = function(args)
+	local url = args
+
+	if url == "" then
+		vim.ui.input({
+			prompt = "Enter URL: ",
+		}, function(input)
+			url = input
+		end)
+	end
+
+	if url == "" then
+		vim.notify("No URL provided")
+		return
+	else
+		if M.url ~= "" or M.title ~= "" then
+			M.stop()
+			while M.url ~= "" or M.title ~= "" do
+				vim.wait(10)
+			end
 		end
+		M.url = url
+	end
 
-		if url == "" then
-			vim.notify("No URL provided")
+	vim.system({ "yt-dlp", "-q", "--no-warnings", "-f", "234", "--print", "fulltitle", M.url }, {
+		text = true,
+	}, function(out)
+		if out.code ~= 0 then
+			vim.notify(out.stderr)
+			M.url = ""
 			return
 		end
 
-		local downloader = {
-			-- "yt-dlp",
-			"-q",
-			"--no-warnings",
-			"-f",
-			"234",
-			"-o",
-			"-",
-			url,
-		}
-		local player = {
-			-- "ffplay",
-			"-i",
-			"-vn",
-			"-nodisp",
-			"-autoexit",
-			"-volume",
-			"20",
-			"-loglevel",
-			"quiet",
-			"-",
-		}
+		M.title, _ = string.gsub(out.stdout, "\n$", " ")
 
-		require("YtAudio").stop(self, false)
-
-		local title = ""
-		vim.system({ "yt-dlp", "-q", "--no-warnings", "-f", "234", "--print", "fulltitle", url }, {
-			text = true,
-		}, function(out)
-			title, _ = string.gsub(out.stdout, "\n$", " ")
-			if M.opts.notifications then
-				vim.notify(title)
-			end
-			vim.g.YtAudioTitle = title
-		end)
-
-		local pipe = vim.loop.new_pipe(true)
-
-		---@diagnostic disable-next-line: missing-fields
-		self.Player = vim.loop.spawn("ffplay", {
-			args = player,
-			stdio = { pipe, nil, nil },
-		}, function()
-			if pipe then
-				pipe:close()
-			end
-		end)
-
-		---@diagnostic disable-next-line: missing-fields
-		self.Downloader = vim.loop.spawn("yt-dlp", {
-			args = downloader,
-			stdio = { nil, pipe, nil },
-		}, function() end)
-	end,
-
-	getTitle = function()
-		if vim.g.YtAudioTitle == "" then
-			return ""
+		if M.opts.notifications == true then
+			vim.notify(M.title)
 		end
-		--  , 
-		return " " .. vim.g.YtAudioTitle
-	end,
+	end):wait()
 
-	setup = function(self, opts)
-		M.opts = vim.tbl_deep_extend("force", M.opts, opts)
+	M.redraw()
+	M.playURL()
+end
 
-		vim.api.nvim_create_user_command("YAPlay", function()
-			require("YtAudio").play(self, "")
-		end, {})
+M.playURL = function()
+	local pipe = vim.loop.new_pipe(true)
 
-		vim.api.nvim_create_user_command("YAFav", function(args)
-			if args.args == "" then
-				vim.notify("No URL provided")
-				return
-			end
-			require("YtAudio").play(self, args.args)
-		end, { nargs = "?" })
+	---@diagnostic disable-next-line: missing-fields
+	M.Downloader = vim.loop.spawn("yt-dlp", {
+		args = vim.list_extend(vim.list_slice(M.ytdlp_args), { M.url }),
+		stdio = { nil, pipe, nil },
+	}, function()
+		if pipe then
+			pipe:close()
+		end
+	end)
 
-		vim.api.nvim_create_user_command("YAStop", function()
-			require("YtAudio").stop(self, true)
-		end, {})
-	end,
-}
+	---@diagnostic disable-next-line: missing-fields
+	M.Player = vim.loop.spawn("ffplay", {
+		args = M.ffplay_args,
+		stdio = { pipe, nil, nil },
+	}, function() end)
+end
 
 return M

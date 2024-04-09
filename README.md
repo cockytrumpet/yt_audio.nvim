@@ -14,27 +14,37 @@ Simple NeoVim plugin to stream audio from YouTube.
   'cockytrumpet/YtAudio',
   init = function()
     vim.api.nvim_set_keymap('n', '<leader>yp', ':YAPlay<CR>', { noremap = true, silent = true })
+    vim.api.nvim_set_keymap('n', '<leader>y1', ':YAPlay https://www.youtube.com/watch?v=dQw4w9WgXcQ&pp=ygUJcmljayByb2xs<CR>', { noremap = true, silent = true })
     vim.api.nvim_set_keymap('n', '<leader>ys', ':YAStop<CR>', { noremap = true, silent = true })
-    vim.api.nvim_set_keymap('n', '<leader>y1', ':YAFav https://www.youtube.com/watch?v=abUT5IEkwrg<CR>', { noremap = true, silent = true })
-    vim.api.nvim_set_keymap('n', '<leader>y2', ':YAFav <url for second favorite>', { noremap = true, silent = true})
   end,
   event = 'VeryLazy',
   opts = true,
 }
 ```
 
+### default opts
+
+```lua
+{
+  notifications = true, -- turn off start/stop notifications
+  icon = ""            -- set any icon
+}
+```
+
 ## User Commands
 
-| Command | Arguments | Keymap       | Description                 |
-| ------- | --------- | ------------ | --------------------------- |
-| YTPlay  |           | \<leader\>yp | Start playing (ask for url) |
-| YTStop  |           | \<leader\>ys | Stop playing                |
-| YTFav   | \<url\>   | user defined | Start playing favorite      |
+| Command | Arguments | Keymap       | Description                                 |
+| ------- | --------- | ------------ | ------------------------------------------- |
+| YTPlay  | \<url\>   | user-defined | Start playing (ask for url if not provided) |
+| YTStop  |           | user-defined | Stop playing                                |
 
 ## Integrations
 
 The title of the currently playing audio can be retrieved with the _getTitle_
-function for use in other plugins. Here is an example for [bufferline](https://github.com/akinsho/bufferline.nvim):
+function for use in other plugins. The status/tabline are redrawn when the title
+changes.
+
+Here is an example for [bufferline](https://github.com/akinsho/bufferline.nvim):
 
 ```lua
 bufferline.setup {
