@@ -1,29 +1,10 @@
 local M = {}
 
-M.ytdlp_args = {
-	"-q",
-	"--no-warnings",
-	"-f",
-	"234",
-	"-o",
-	"-",
-	-- url is appended to this table
-}
-
-M.ffplay_args = {
-	"-i",
-	"-vn",
-	"-nodisp",
-	"-autoexit",
-	"-loglevel",
-	"quiet",
-	-- "-" is appended after volume options
-}
-
-M.opts = {
-	notifications = true,
-	volume = 50,
-	icon = "", --  , 
+M.opts = require("YtAudio.opts")
+M.utils = require("YtAudio.utils")
+M.state = {
+	title = "",
+	url = "",
 }
 
 M.setup = function(opts)
@@ -36,6 +17,10 @@ M.setup = function(opts)
 	vim.api.nvim_create_user_command("YAStop", function()
 		require("YtAudio").stop()
 	end, {})
+end
+
+M.getTitle = function()
+	return M.utils.getTitle(M)
 end
 
 M.play = function(args)
@@ -53,62 +38,23 @@ M.play = function(args)
 		vim.notify("No URL provided")
 		return
 	else
-		if M.url ~= "" or M.title ~= "" then
+		if M.state.url ~= "" or M.state.title ~= "" then
 			M.stop()
-			while M.url ~= "" or M.title ~= "" do
+			while M.state.url ~= "" or M.state.title ~= "" do
 				vim.wait(10)
 			end
 		end
-		M.url = url
+		M.state.url = url
+		M.utils.notify(M, "Playing " .. M.state.url)
 	end
 
-	vim.system({ "yt-dlp", "-q", "--no-warnings", "-f", "234", "--print", "fulltitle", M.url }, {
-		text = true,
-	}, function(out)
-		if out.code ~= 0 then
-			vim.notify(out.stderr)
-			M.url = ""
-			return
-		end
-
-		M.title, _ = string.gsub(out.stdout, "\n$", " ")
-
-		M.notify(M.title)
-	end):wait()
-
-	M.redraw()
-	M.playURL()
-end
-
-M.playURL = function()
-	local pipe = vim.loop.new_pipe(true)
-	local new_ffplay_args = { "-volume", M.opts.volume, "-" }
-
-	---@diagnostic disable-next-line: missing-fields
-	M.Downloader = vim.loop.spawn("yt-dlp", {
-		args = vim.list_extend(vim.list_slice(M.ytdlp_args), { M.url }),
-		stdio = { nil, pipe, nil },
-	}, function()
-		if pipe then
-			pipe:close()
-		end
-	end)
-
-	---@diagnostic disable-next-line: missing-fields
-	M.Player = vim.loop.spawn("ffplay", {
-		args = vim.list_extend(vim.list_slice(M.ffplay_args), new_ffplay_args),
-		stdio = { pipe, nil, nil },
-	}, function() end)
-end
-
-M.notify = function(message)
-	if M.opts.notifications then
-		vim.notify(message)
-	end
+	M.utils.playURL(M)
+	M.utils.setTitle(M)
+	M.utils.redraw()
 end
 
 M.stop = function()
-	M.notify("Stopping")
+	M.utils.notify(M, "Stopping")
 
 	local stop_process = function(component)
 		if component then
@@ -116,26 +62,15 @@ M.stop = function()
 		end
 	end
 
-	stop_process(M.Downloader)
-	stop_process(M.Player)
+	stop_process(M.state.Downloader)
+	stop_process(M.state.Player)
 
-	M.title = ""
-	M.url = ""
+	M.state.title = ""
+	M.state.url = ""
+	M.state.Downloader = nil
+	M.state.Player = nil
 
-	M.redraw()
-end
-
-M.getTitle = function()
-	if M.title == "" then
-		return M.title
-	end
-
-	return M.opts.icon .. " " .. M.title
-end
-
-M.redraw = function()
-	vim.cmd("redrawtabline")
-	vim.cmd("redrawstatus")
+	M.utils.redraw()
 end
 
 return M
