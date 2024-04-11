@@ -9,7 +9,7 @@ local M = {
 		"234",
 		"-o",
 		"-",
-		-- url is appended to this table
+		-- <url>
 	},
 	ffplay_args = {
 		"-i",
@@ -18,7 +18,9 @@ local M = {
 		"-autoexit",
 		"-loglevel",
 		"quiet",
-		-- "-" is appended after volume options
+		-- -volume
+		-- <0-100>
+		-- "-"
 	},
 }
 

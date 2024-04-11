@@ -1,7 +1,7 @@
 local M = {}
 
-M.opts = require("YtAudio.opts")
-M.utils = require("YtAudio.utils")
+M.opts = require("yt_audio.opts")
+M.utils = require("yt_audio.utils")
 M.state = {
 	title = "",
 	url = "",
@@ -11,16 +11,16 @@ M.setup = function(opts)
 	M.opts = vim.tbl_deep_extend("force", M.opts, opts or {})
 
 	vim.api.nvim_create_user_command("YAPlay", function(args)
-		require("YtAudio").play(args.args)
+		require("yt_audio").play(args.args)
 	end, { nargs = "?" })
 
 	vim.api.nvim_create_user_command("YAStop", function()
-		require("YtAudio").stop()
+		require("yt_audio").stop()
 	end, {})
 end
 
-M.getTitle = function()
-	return M.utils.getTitle(M)
+M.get_title = function()
+	return M.utils.get_title(M)
 end
 
 M.play = function(args)
@@ -39,23 +39,26 @@ M.play = function(args)
 		return
 	else
 		if M.state.url ~= "" or M.state.title ~= "" then
-			M.stop()
+			M.reset()
 			while M.state.url ~= "" or M.state.title ~= "" do
 				vim.wait(10)
 			end
 		end
 		M.state.url = url
-		M.utils.notify(M, "Playing " .. M.state.url)
 	end
 
-	M.utils.playURL(M)
-	M.utils.setTitle(M)
+	M.utils.play_url(M)
+	M.utils.set_title(M)
 	M.utils.redraw()
+	M.utils.notify(M, "Playing " .. M.state.title)
 end
 
 M.stop = function()
-	M.utils.notify(M, "Stopping")
+	M.reset()
+	M.utils.notify(M, "Stopped")
+end
 
+M.reset = function()
 	local stop_process = function(component)
 		if component then
 			component.kill(component, "sigterm")
