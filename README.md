@@ -34,6 +34,10 @@ opts = {
       "--no-warnings",
       "-f",
       "234",
+      "-P",
+      "temp:/tmp",
+      "--downloader", -- stops '--Frag' files from being written to disk
+      "ffmpeg",
       "-o",
       "-",
       -- <url>
