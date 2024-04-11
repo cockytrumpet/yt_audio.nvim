@@ -1,4 +1,4 @@
-# YtAudio
+# yt_audio
 
 Simple Neovim plugin to stream audio from YouTube.
 
