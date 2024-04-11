@@ -1,19 +1,19 @@
 # YtAudio
 
-Simple NeoVim plugin to stream audio from YouTube.
+Simple Neovim plugin to stream audio from YouTube.
 
 ## Dependencies
 
-- yt-dlp
-- ffmpeg
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp)
+- [ffmpeg](https://ffmpeg.org/download.html)
 
-## Lazy spec
+## Lazy plugin spec
 
 ```lua
 {
   'cockytrumpet/YtAudio',
   init = function()
-    vim.api.nvim_set_keymap('n', '<leader>yp', ':YAPlay<CR>', { noremap = true, silent = true })
+    vim.api.nvim_set_keymap('n', '<leader>yp', ':YAPlay<CR>', { noremap = true, silent = true }) -- prompt for url
     vim.api.nvim_set_keymap('n', '<leader>y1', ':YAPlay https://www.youtube.com/watch?v=dQw4w9WgXcQ&pp=ygUJcmljayByb2xs<CR>', { noremap = true, silent = true })
     vim.api.nvim_set_keymap('n', '<leader>ys', ':YAStop<CR>', { noremap = true, silent = true })
   end,
@@ -22,13 +22,33 @@ Simple NeoVim plugin to stream audio from YouTube.
 }
 ```
 
-### default opts
+### Changing default options
 
 ```lua
-{
-  notifications = true, -- turn off start/stop notifications
+opts = {
   volume = 50,          -- 0-100
-  icon = ""            -- set any icon
+  icon = ""            -- set any font icon or emoji:  , 🎧, 
+  notifications = true, -- toggle notifications
+  ytdlp_args = {        -- yt-dlp arguments
+      "-q",
+      "--no-warnings",
+      "-f",
+      "234",
+      "-o",
+      "-",
+      -- <url>
+  },
+  ffplay_args = {      -- ffplay arguments
+      "-i",
+      "-vn",
+      "-nodisp",
+      "-autoexit",
+      "-loglevel",
+      "quiet",
+      -- -volume
+      -- <0-100>
+      -- "-"
+  },
 }
 ```
 
@@ -41,9 +61,7 @@ Simple NeoVim plugin to stream audio from YouTube.
 
 ## Integrations
 
-The title of the currently playing audio can be retrieved with the _getTitle_
-function for use in other plugins. The status/tabline are redrawn when the title
-changes.
+The title of the currently playing audio can be retrieved with the _get_title_ function for use in other plugins.
 
 Here is an example for [bufferline](https://github.com/akinsho/bufferline.nvim):
 
@@ -53,10 +71,10 @@ bufferline.setup {
   options = {
     custom_areas = {
       right = function()
-        local YtAudioTitle = require('YtAudio').getTitle()
-        if YtAudioTitle then
-          -- return { { text = YtAudioTitle, guifg = '#FF0000' } }
-          return { { text = YtAudioTitle } }
+        local title = require('yt_audio').get_title()
+        if title then
+          -- return { { text = title, guifg = '#FF0000' } }
+          return { { text = title } }
         end
       end,
     },
