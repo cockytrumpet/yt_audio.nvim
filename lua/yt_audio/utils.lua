@@ -48,6 +48,24 @@ M.notify = function(yt_audio, message)
 	end
 end
 
+M.reset = function(yt_audio)
+	local stop_process = function(component)
+		if component then
+			component.kill(component, "sigterm")
+		end
+	end
+
+	stop_process(yt_audio.state.Downloader)
+	stop_process(yt_audio.state.Player)
+
+	yt_audio.state.title = ""
+	yt_audio.state.url = ""
+	yt_audio.state.Downloader = nil
+	yt_audio.state.Player = nil
+
+	yt_audio.utils.redraw()
+end
+
 M.redraw = function()
 	vim.cmd("redrawtabline")
 	vim.cmd("redrawstatus")

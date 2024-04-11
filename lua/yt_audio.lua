@@ -39,7 +39,7 @@ M.play = function(args)
 		return
 	else
 		if M.state.url ~= "" or M.state.title ~= "" then
-			M.reset()
+			M.utils.reset(M)
 			while M.state.url ~= "" or M.state.title ~= "" do
 				vim.wait(10)
 			end
@@ -54,26 +54,8 @@ M.play = function(args)
 end
 
 M.stop = function()
-	M.reset()
+	M.utils.reset(M)
 	M.utils.notify(M, "Stopped")
-end
-
-M.reset = function()
-	local stop_process = function(component)
-		if component then
-			component.kill(component, "sigterm")
-		end
-	end
-
-	stop_process(M.state.Downloader)
-	stop_process(M.state.Player)
-
-	M.state.title = ""
-	M.state.url = ""
-	M.state.Downloader = nil
-	M.state.Player = nil
-
-	M.utils.redraw()
 end
 
 return M
