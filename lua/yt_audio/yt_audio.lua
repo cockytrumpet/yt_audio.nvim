@@ -99,6 +99,41 @@ end
 N.redraw = function()
 	vim.cmd("redrawtabline")
 	vim.cmd("redrawstatus")
+	if N.state.debug_win or N.opts.dev_mode then
+		N.debug()
+	end
 end
 
+N.debug = function()
+	local cmd = "lua=require 'yt_audio'"
+	local lines = vim.split(vim.api.nvim_exec(cmd, true), "\n", { plain = true })
+
+	if not N.state.debug_win then
+		local col = vim.api.nvim_get_option_value("columns", {})
+		local newbuf = vim.api.nvim_create_buf(false, true)
+		N.state.debug_win = newbuf
+
+		vim.api.nvim_set_option_value("filetype", "lua", { buf = newbuf })
+		vim.api.nvim_set_option_value("buflisted", false, { buf = newbuf })
+		vim.keymap.set("n", "q", function()
+			N.state.debug_win = nil
+			vim.cmd("q")
+		end, { buffer = newbuf })
+
+		local opts = {
+			relative = "editor",
+			width = 33,
+			height = 38,
+			col = col,
+			row = 1,
+			anchor = "NE",
+			style = "minimal",
+			border = "single",
+		}
+		local win = vim.api.nvim_open_win(newbuf, true, opts)
+		vim.api.nvim_set_option_value("wrap", true, { win = win })
+	end
+
+	vim.api.nvim_buf_set_lines(N.state.debug_win, 0, -1, false, lines)
+end
 return N
