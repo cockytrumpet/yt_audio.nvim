@@ -1,4 +1,4 @@
-local M = {
+local O = {
 	notifications = true,
 	volume = 50,
 	icon = "", --  , 
@@ -28,4 +28,4 @@ local M = {
 	},
 }
 
-return M
+return O

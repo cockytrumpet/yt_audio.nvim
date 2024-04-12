@@ -1,7 +1,9 @@
+-- This module provides a high-level interface for playing audio from YouTube videos in Neovim.
 local M = {}
 
 M.yt_audio = require("yt_audio.yt_audio")
 
+--@param opts table<string, any>
 M.setup = function(opts)
 	local default_opts = require("yt_audio.opts")
 	M.yt_audio.opts = vim.tbl_deep_extend("force", default_opts, opts or {})
@@ -15,22 +17,24 @@ M.setup = function(opts)
 	end, {})
 end
 
+-- Returns formatted title of the video, or an empty string if no video is playing.
+-- Only called externally.
+--@return string
 M.get_title = function()
 	return M.yt_audio.get_title()
 end
 
+--@param args string
 M.play = function(args)
 	if not M.yt_audio.get_url(args) then
 		return
 	end
 
 	M.yt_audio.play_url()
-	M.yt_audio.notify("Playing " .. M.yt_audio.state.title)
 end
 
 M.stop = function()
-	M.yt_audio.reset()
-	M.yt_audio.notify("Stopped")
+	return M.yt_audio.stop()
 end
 
 return M

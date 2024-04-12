@@ -1,6 +1,6 @@
-local M = {
+local S = {
 	title = "",
 	url = "",
 }
 
-return M
+return S
