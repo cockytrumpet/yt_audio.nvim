@@ -3,11 +3,55 @@ local N = {}
 
 N.state = require("yt_audio.state")
 
+-- The message to display.
+--@param message string
+local notify = function(message)
+	if N.opts.notifications then
+		vim.notify(message)
+	end
+end
+
+--@return string @The title of the YouTube video, or an empty string if no title is set.
+local get_title = function()
+	if N.state.title == "" then
+		return ""
+	end
+	return N.opts.icon .. " " .. N.state.title
+end
+
+-- redraw the tabline and statusline.
+local redraw = function()
+	vim.cmd("redrawtabline")
+	vim.cmd("redrawstatus")
+	if N.state.debug_win or N.opts.dev_mode then
+		N.debug()
+	end
+end
+
+-- reset the state of the module.
+local reset = function()
+	local stop_process = function(component)
+		if component then
+			component.kill(component, "sigterm")
+		end
+	end
+
+	stop_process(N.state.Downloader)
+	stop_process(N.state.Player)
+
+	N.state.title = ""
+	N.state.url = ""
+	N.state.Downloader = nil
+	N.state.Player = nil
+
+	redraw()
+end
+
 -- If no URL is provided, it prompts the user to enter one.
 -- If a URL is already stored in the state, it resets the state before storing the new URL.
 --@param args string @The URL of the YouTube video.
 --@return boolean @true if a URL is provided, false otherwise.
-N.get_url = function(args)
+local get_url = function(args)
 	local url = args or ""
 
 	if url == "" then
@@ -24,7 +68,7 @@ N.get_url = function(args)
 	end
 
 	if N.state.url ~= "" or N.state.title ~= "" then
-		N.reset()
+		reset()
 		while N.state.url ~= "" or N.state.title ~= "" do
 			vim.wait(10)
 		end
@@ -33,9 +77,24 @@ N.get_url = function(args)
 	return true
 end
 
+-- Store the title of the YouTube video.
+-- It uses the yt-dlp command-line program to get the title.
+local set_title = function()
+	vim.system({ "yt-dlp", "-q", "--no-warnings", "-f", "234", "--print", "fulltitle", N.state.url }, {
+		text = true,
+	}, function(out)
+		if out.code ~= 0 then
+			vim.notify(out.stderr)
+			N.state.url = ""
+			return
+		end
+		N.state.title, _ = string.gsub(out.stdout, "\n$", " ")
+	end):wait()
+end
+
 -- Play the audio of the YouTube video.
 -- It uses the yt-dlp command-line program to download the audio and ffplay to play it.
-N.play_url = function()
+local play_url = function()
 	local pipe = vim.loop.new_pipe(true)
 	local new_ffplay_args = { "-volume", N.opts.volume, "-" }
 
@@ -55,81 +114,22 @@ N.play_url = function()
 		stdio = { pipe, nil, nil },
 	}, function() end)
 
-	N.set_title()
-	N.redraw()
+	set_title()
+	redraw()
 
 	if N.state.url ~= "" and N.state.title ~= "" then
-		N.notify("Playing " .. N.get_title())
-	end
-end
-
--- Store the title of the YouTube video.
--- It uses the yt-dlp command-line program to get the title.
-N.set_title = function()
-	vim.system({ "yt-dlp", "-q", "--no-warnings", "-f", "234", "--print", "fulltitle", N.state.url }, {
-		text = true,
-	}, function(out)
-		if out.code ~= 0 then
-			vim.notify(out.stderr)
-			N.state.url = ""
-			return
-		end
-		N.state.title, _ = string.gsub(out.stdout, "\n$", " ")
-	end):wait()
-end
-
---@return string @The title of the YouTube video, or an empty string if no title is set.
-N.get_title = function()
-	if N.state.title == "" then
-		return ""
-	end
-	return N.opts.icon .. " " .. N.state.title
-end
-
--- The message to display.
---@param message string
-N.notify = function(message)
-	if N.opts.notifications then
-		vim.notify(message)
+		notify("Playing " .. get_title())
 	end
 end
 
 -- reset the state of the module and notify
-N.stop = function()
-	N.reset()
-	N.notify("Stopped")
-end
-
--- reset the state of the module.
-N.reset = function()
-	local stop_process = function(component)
-		if component then
-			component.kill(component, "sigterm")
-		end
-	end
-
-	stop_process(N.state.Downloader)
-	stop_process(N.state.Player)
-
-	N.state.title = ""
-	N.state.url = ""
-	N.state.Downloader = nil
-	N.state.Player = nil
-
-	N.redraw()
-end
-
--- redraw the tabline and statusline.
-N.redraw = function()
-	vim.cmd("redrawtabline")
-	vim.cmd("redrawstatus")
-	if N.state.debug_win or N.opts.dev_mode then
-		N.debug()
-	end
+local stop = function()
+	reset()
+	notify("Stopped")
 end
 
 -- display the state of the module in a new window.
-N.debug = function()
+local debug = function()
 	local cmd = "lua=require 'yt_audio'"
 	local lines = vim.split(vim.api.nvim_exec(cmd, true), "\n", { plain = true })
 
@@ -162,4 +162,9 @@ N.debug = function()
 	vim.api.nvim_buf_set_lines(N.state.debug_win, 0, -1, false, lines)
 end
 
+N.play_url = play_url
+N.stop = stop
+N.get_title = get_title
+N.get_url = get_url
+N.debug = debug
 return N
