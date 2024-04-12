@@ -25,7 +25,6 @@ M.play = function(args)
 	end
 
 	M.yt_audio.play_url()
-	M.yt_audio.redraw()
 	M.yt_audio.notify("Playing " .. M.yt_audio.state.title)
 end
 

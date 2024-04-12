@@ -50,6 +50,7 @@ N.play_url = function()
 	}, function() end)
 
 	N.set_title()
+	N.redraw()
 end
 
 N.set_title = function()
@@ -123,7 +124,7 @@ N.debug = function()
 		local opts = {
 			relative = "editor",
 			width = 33,
-			height = 38,
+			height = 40,
 			col = col,
 			row = 1,
 			anchor = "NE",
