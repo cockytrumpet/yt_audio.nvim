@@ -85,3 +85,18 @@ bufferline.setup {
   },
 }
 ```
+
+## Screen Shots
+
+### with notifications=true, using noice
+
+<p align="center">
+  <img src="screenshots/noice.png" title="with notifications=true, using noice">
+</p>
+
+### with notifications=false, using bufferline
+
+<p align="center">
+  <img src="screenshots/bufferline.png" title="with notifications=false, using
+    bufferline">
+</p>
