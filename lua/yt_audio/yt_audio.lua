@@ -118,7 +118,7 @@ local play_url = function()
 	redraw()
 
 	if N.state.url ~= "" and N.state.title ~= "" then
-		notify("Playing " .. get_title())
+		notify("Playing " .. N.state.title)
 	end
 end
 
@@ -129,37 +129,51 @@ local stop = function()
 end
 
 -- display the state of the module in a new window.
-local debug = function()
-	local cmd = "lua=require 'yt_audio'"
-	local lines = vim.split(vim.api.nvim_exec(cmd, true), "\n", { plain = true })
+---@param args? string 'stop' to clean up the debug window
+local debug = function(args)
+	if args == "stop" then
+		if N.state.debug_win then
+			vim.api.nvim_win_close(N.state.debug_win, true)
+			N.state.debug_win = nil
+		end
+		if N.state.debug_buf then
+			vim.api.nvim_buf_delete(N.state.debug_buf, { force = true })
+			N.state.debug_buf = nil
+		end
+		return
+	end
 
-	if not N.state.debug_win then
-		local col = vim.api.nvim_get_option_value("columns", {})
+	if not N.state.debug_buf then
 		local newbuf = vim.api.nvim_create_buf(false, true)
-		N.state.debug_win = newbuf
 
 		vim.api.nvim_set_option_value("filetype", "lua", { buf = newbuf })
 		vim.api.nvim_set_option_value("buflisted", false, { buf = newbuf })
 		vim.keymap.set("n", "q", function()
-			N.state.debug_win = nil
-			vim.cmd("q")
+			require("yt_audio.yt_audio").debug("stop")
 		end, { buffer = newbuf })
 
+		N.state.debug_buf = newbuf
+	end
+
+	if not N.state.debug_win then
 		local opts = {
 			relative = "editor",
 			width = 33,
 			height = 41,
-			col = col,
+			col = vim.api.nvim_get_option_value("columns", {}),
 			row = 1,
 			anchor = "NE",
 			style = "minimal",
 			border = "single",
 		}
-		local win = vim.api.nvim_open_win(newbuf, true, opts)
-		vim.api.nvim_set_option_value("wrap", true, { win = win })
+
+		N.state.debug_win = vim.api.nvim_open_win(N.state.debug_buf, true, opts)
+		vim.api.nvim_set_option_value("wrap", true, { win = N.state.debug_win })
 	end
 
-	vim.api.nvim_buf_set_lines(N.state.debug_win, 0, -1, false, lines)
+	local cmd = "lua=require 'yt_audio'"
+	local lines = vim.split(vim.api.nvim_exec(cmd, true), "\n", { plain = true })
+	vim.api.nvim_buf_set_lines(N.state.debug_buf, 0, -1, false, lines)
 end
 
 N.play_url = play_url
