@@ -7,7 +7,9 @@ N.state = require("yt_audio.state")
 ---@param message string
 local notify = function(message)
 	if N.opts.notifications then
-		vim.notify(message)
+		vim.notify(message, "info", {
+			title = "yt_audio",
+		})
 	end
 end
 
