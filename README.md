@@ -11,7 +11,7 @@ Simple Neovim plugin to stream audio from YouTube.
 
 ```lua
 {
-  'cockytrumpet/YtAudio',
+  'cockytrumpet/yt_audio.nvim',
   init = function()
     vim.api.nvim_set_keymap('n', '<leader>yp', ':YAPlay<CR>', { noremap = true, silent = true }) -- prompt for url
     vim.api.nvim_set_keymap('n', '<leader>y1', ':YAPlay https://www.youtube.com/watch?v=dQw4w9WgXcQ&pp=ygUJcmljayByb2xs<CR>', { noremap = true, silent = true })
