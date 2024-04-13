@@ -4,14 +4,14 @@ local N = {}
 N.state = require("yt_audio.state")
 
 -- The message to display.
---@param message string
+---@param message string
 local notify = function(message)
 	if N.opts.notifications then
 		vim.notify(message)
 	end
 end
 
---@return string @The title of the YouTube video, or an empty string if no title is set.
+---@return string @the title of the YouTube video, or an empty string if no title is set
 local get_title = function()
 	if N.state.title == "" then
 		return ""
@@ -23,7 +23,7 @@ end
 local redraw = function()
 	vim.cmd("redrawtabline")
 	vim.cmd("redrawstatus")
-	if N.state.debug_win or N.opts.dev_mode then
+	if N.state.debug_buf or N.opts.dev_mode then
 		N.debug()
 	end
 end
@@ -49,8 +49,8 @@ end
 
 -- If no URL is provided, it prompts the user to enter one.
 -- If a URL is already stored in the state, it resets the state before storing the new URL.
---@param args string @The URL of the YouTube video.
---@return boolean @true if a URL is provided, false otherwise.
+---@param args? string the URL of the YouTube video
+---@return boolean @true if a URL is provided, false otherwise
 local get_url = function(args)
 	local url = args or ""
 
